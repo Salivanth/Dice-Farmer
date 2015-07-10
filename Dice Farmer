@@ -1,0 +1,434 @@
+# To do next: Create each part of the turn in a helper function.
+
+# Allow the player to pair off their remaining dice.
+# Add these dice to their dice pool.
+
+# Then make runTurn work.
+# Then create a victory condition.
+
+# Then test the game to see if it works.
+
+def printRules(): # Rules of the game. Also introduces the source code.
+
+    print '''Welcome to Dice Farmer Simulator.
+
+Version 1.0.
+
+Credit to Leftover Soup (www.leftoversoup.com) for the rules to Dice Farmer.
+
+Dice lingo: XdY means X dice with Y sides each.
+E.g, 3d6 means three six-sided dice. 2d10 means two ten-sided dice.
+
+How to play Dice Farmer:
+
+Each player starts with 3d6. You win by getting 3d20.
+
+Each turn, roll all dice. Remove all dice with 1's rolled; they are dead.
+These dice are no longer part of your pool.
+
+Sort the remaining dice to form groups that add up to exactly 4, 6, 8, 10, 12, or 20.
+Add dice to your pool according to these groups.
+
+Groups may have only 1 die. (E.g, a 6 can become a d6 by itself)
+
+You get your initial dice back as well, except the ones that rolled 1's.
+
+If you are reduced to zero dice, you start again at 3d6.
+
+Ignore the remainders.'''
+
+class Player(object):
+
+    """A Player object is created for each player in the game.
+    This object keeps track of the player's dice pool.
+    It also tracks if the player has won the game."""
+
+    def __init__(self, name):
+
+        self.name = name
+        self.dicePool = [6, 6, 6]
+
+def choosePlayers():
+
+    """Player is prompted to choose a number of players between 1 and 10.
+    That number of players will then be added to the game."""
+
+    playersChosen = 0
+
+    while playersChosen == 0:
+        
+        print 'How many people will be playing today? (1-10 players)'
+        try:
+            players = int(raw_input())
+        except:
+            print 'I\'m sorry. That\'s not a valid number of players. Please try again.'
+            players = 0
+
+        if players == 1:
+            print 'You have chosen 1 player.'
+            return players
+
+        if players in range(2, 11, 1):
+            print 'You have chosen %s players.' % (players)
+            return players
+        
+        elif players != 0:
+            print 'I\'m sorry. That\'s not a valid number of players. Please try again.'
+            playersChosen = 0
+
+def chooseNames(players):
+
+    """Takes in a number of players between 1 and 10.
+    Returns a list of user-inputted names for the players."""
+    
+    i = 1
+    nameList = []
+
+    while i <= players:
+        
+        print 'Please name Player %s (1-20 characters).' % (i)
+        name = raw_input()
+
+        if len(name) > 20:
+            print 'I\'m sorry. Your name is too long. Please shorten it and try again.'
+        else:
+            nameList.append(name)
+            i += 1
+
+    return nameList
+
+def makePlayers(nameList):
+
+    """Takes in a list of names.
+    Makes a Player object for each one."""
+
+    playerList = []
+    for name in nameList:
+        playerList.append(Player(name))
+
+    return playerList
+
+def displayDicePool(dicePool):
+
+    """Takes in a dice pool. Returns it in a more human-friendly fashion."""
+
+    firstDie = True
+    poolString = 'your dice pool is: ' # Lowercase is deliberate.
+    
+    for n in (4, 6, 8, 10, 12, 20): # Returns in the form of XdY, AdB, etc.
+        
+        if dicePool.count(n) != 0:
+            if firstDie == True:
+                poolString += '%sd%s' % (dicePool.count(n), n) # For grammar.
+                firstDie = False
+            else:
+                poolString += ', %sd%s' % (dicePool.count(n), n)
+
+    return poolString
+
+def rollDice(dicePool):
+
+    """Takes in a list of dice. Rolls each one. Discards all ones.
+    Returns output that tells the players what has happened."""
+
+    rolledDice = []
+    keptDice = []
+
+    for i in range(0, len(dicePool)):
+
+        roll = random.randrange(1, dicePool[i]+1) # Rolls 1dN, N = die size.
+        rolledDice.append(roll)
+
+        if roll != 1:
+            keptDice.append(roll) # Keeps all rolls except 1's.
+            
+    rolledDice = sorted(rolledDice) # Sorts list into ascending order.
+    keptDice = sorted(keptDice)
+    dieString = str(rolledDice)[1:-1] # Formats [1, 2] into 1, 2.
+    print 'You have rolled: %s' % (dieString) # Returns rolled dice. (inc. 1's)
+
+    print 'Discarding ones...'
+    time.sleep(0.25) # Wait a tiny bit. Looks more natural.
+        
+    dieString = str(keptDice)[1:-1]
+    print 'Dice available: %s' % (dieString) # Returns available dice.
+
+    return keptDice
+
+def copyPool(dicePool):
+
+    """Takes in a list. Returns an identical list.
+    This is a helper function."""
+
+    newPool = []
+
+    for i in range(0, len(dicePool)):
+        newPool.append(dicePool[i])
+
+    return newPool
+
+def sortPrint(List):
+
+    """Takes in a list of numbers.
+    Sorts it in ascending order, turns it into a string, and returns it.
+    If list has 0 elements, returns 'None' instead.
+    This is a helper function."""
+
+    if len(List) == 0:
+        return 'None'
+    else:
+        newList = str(sorted(List))[1:-1]
+        return newList
+
+def addList(List):
+
+    """Takes in a list of numbers.
+    Adds them together, and returns the total.
+    This is a helper function."""
+
+    total = 0
+
+    for i in range(0, len(List)):
+        total += List[i]
+
+    return total
+        
+
+def checkGroupInput(playerInput, targetNum):
+
+    """Takes in a group of dice the player has typed in.
+    Checks to see if all the inputs are numbers.
+    Checks to see if the group adds up to what it should.
+    Returns a list of dice if valid, False if not.
+    Does NOT check if the dice are owned by player.
+    That's a different function."""
+
+    baseInput = playerInput.split(',') # Turns 7, 4, 1 into ['7', '4', '1']
+    newInput = []
+    
+    for i in range(0, len(baseInput)): # Turns ['7', '4', '1'] into [7, 4, 1]
+        try:
+            newInput.append(int(baseInput[i]))
+        except: # Tests to see if they're all ints.
+            print 'Sorry. That is not a valid input.'
+            return False
+
+    testSum = 0
+
+    for i in range(0, len(newInput)):
+        testSum += newInput[i]
+
+    if testSum == targetNum: # Tests if the numbers add up to what was specified.
+        return newInput
+    else:
+        print 'Sorry. These numbers do not add up to the number you gave.'
+        return False 
+
+def displayGroups(dicePool, pairList):
+
+    """Takes in a list of dice and a list of groups.
+    Displays all relevant info about the game state.
+    Asks if the user wants to make another group.
+    This is a helper function."""
+
+    dieString = sortPrint(dicePool) # Helper function.
+    pairString = sortPrint(pairList)
+    print 'Remaining dice: %s' % (dieString)
+    print 'Current groups: %s' % (pairString)
+
+def checkIfDiceOwned(dicePool, group):
+
+    """Takes in a pool of dice, and a group of dice.
+    Checks to see if each die in the group is in the pool.
+    Returns True or False."""
+
+
+    for i in range(0, len(group)):
+        if group[i] in dicePool:
+            dicePool.remove(group[i])
+        else:
+            return False
+
+    return True
+
+def addToPool(dicePool, diceToAdd):
+
+    """Takes in two lists of dice.
+    Adds the two lists together."""
+
+    for i in range(0, len(diceToAdd)):
+        dicePool.append(diceToAdd[i])
+
+    return dicePool
+
+def groupDice(dicePool, playerPool): # Split this into helper functions.
+
+    """Takes in a list of dice. Allows the user to group these dice
+    into configurations of 4, 6, 8, 10, 12, and 20.
+    Also includes the player's original pool, before he rolled.
+    Returns a user-inputted list of configurations."""
+
+    playerContinue = True
+    groupList = []
+    exampleShown = False
+    originalPool = copyPool(dicePool)
+
+    while playerContinue == True:
+
+        displayGroups(dicePool, groupList) # Displays dice info.
+                                  
+        print 'Would you like to make another group? (Y/N)'
+        response = raw_input()
+        
+        if response in ('N', 'n', 'No', 'no'): # Player makes no more groups.
+            playerContinue = False
+            print 'Okay.'
+            print ''
+            
+        elif response in ('Y', 'y', 'Yes', 'yes'): # Player makes a group.
+
+            print 'What number are you making? (4, 6, 8, 10, 12, or 20)'
+            groupNum = raw_input()
+
+            if groupNum in ('4', '6', '8', '10', '12', '20'): # Valid number.
+
+                groupNum = int(groupNum)
+
+                print 'To cancel, type 0.'
+
+                group = 0
+                tempPool = copyPool(dicePool)
+
+                print 'Which dice do you wish to group?'
+                if exampleShown == False:
+                    print 'Example: 2, 2, 2'
+                    exampleShown = True
+
+                groupedDice = raw_input()
+                
+                if groupedDice == '0': # Cancels the current group.
+                    break
+
+                else:
+
+                    groupedDice = checkGroupInput(groupedDice, groupNum)
+
+                    if groupedDice != False:
+
+                        if checkIfDiceOwned(dicePool, groupedDice) == True:
+
+                            for i in range(0, len(groupedDice)): # Removes the grouped dice from the pool.
+                                  tempPool.remove(groupedDice[i])
+                            groupList.append(groupNum) # Adds the group as a finished die.
+                            dicePool = tempPool
+                                  
+                        else: # At least one die not owned.
+                            print 'Sorry. You do not own every die in that group.'
+                            
+            else: # Invalid group number.
+                print 'Sorry. That is not a valid number.'
+                
+
+        else: # Invalid input.
+            print 'Sorry. That is not a valid response.'
+
+    return addToPool(playerPool, groupList)
+
+def checkForVictory(dicePool):
+
+    """Takes in a list of dice.
+    Checks to see if it is a winning pool. (Contains 3d20)
+    Returns True if it is, False if not."""
+        
+    if dicePool.count(20) >= 3:
+        return True
+    else:
+        return False
+    
+def runTurn(playerList, currentTurn):
+    
+    """Takes in the list of players, and the current turn number.
+    Runs one turn, if the active player has any dice left."""
+
+    for player in playerList:
+        print '%s, %s' % (player.name, displayDicePool(player.dicePool))
+
+    currentPlayer = playerList[currentTurn].name # For readability.
+
+    print ''
+    print '%s, it is your turn.' % (currentPlayer)
+    print 'Press Enter to roll your dice.'
+    junkVariable = raw_input() # Does nothing. Just makes user press Enter.
+    print ''
+                                  
+    pool = rollDice(playerList[currentTurn].dicePool) # Current player's dice pool.
+    pool = groupDice(pool, playerList[currentTurn].dicePool) # Returns the new pool.
+ 
+    if checkForVictory(pool) == True: # If the player has won the game.
+        print '%s has won the game! Congratulations!' % (currentPlayer)
+
+    if len(pool) == 0: # If player has no dice left, they get 3d6 again.
+        pool = [6, 6, 6]
+
+    playerList[currentTurn].dicePool = pool # Gives player new dice pool.
+                                  
+def changeTurn(playerList, currentTurn):
+
+    """Takes in the player list and whose turn it is.
+    Returns who is next to take their turn."""
+
+    if currentTurn == len(playerList) - 1: # Turn goes from last player to first.
+        currentTurn = 0
+    else:
+        currentTurn += 1
+        
+    return currentTurn
+        
+import random
+import time
+continueGame = True
+#continueGame = False # For debugging purposes
+
+while continueGame == True:
+
+    printRules() # Rules of the game / welcome message.
+
+    players = choosePlayers() # Determines number of players in the game.
+
+    nameList = chooseNames(players) # Names each player in turn.
+
+    playerList = makePlayers(nameList) # Creates a Player object for each player.
+
+    turnOrder = playerList # The player list doubles as the turn order.
+    currentTurn = 0 # Creates or resets the turn order.
+
+    currentGameGoing = True
+                                  
+    while currentGameGoing == True: # Creates the current Dice Farmer game.
+        
+        runTurn(playerList, currentTurn)
+        if checkForVictory(playerList[currentTurn].dicePool) == True: 
+            currentGameGoing = False # If a player won, the game ends.
+            break
+        currentTurn = changeTurn(playerList, currentTurn)
+
+    print 'Would you like to play again? (Y/N)'
+
+    responseGiven = False
+                                  
+    while responseGiven == False:
+                                  
+        response = raw_input()
+
+        if response in ('Y', 'y', 'Yes', 'yes', 'YES'):
+            print 'Okay! Starting new game.'
+            print ''
+            responseGiven = True
+
+        elif response in ('N', 'n', 'No', 'no', 'NO'):
+            print 'Okay. Thank you for playing!'
+            continueGame = False
+            responseGiven = True
+
+        else:
+            print 'Sorry. Invalid input.'
