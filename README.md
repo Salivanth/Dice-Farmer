@@ -1,7 +1,13 @@
 # Dice-Farmer
 Computerised version of the game Dice Farmer. (http://leftoversoup.com/archive.php?num=198) 
 Written to show basic programming ability for university.
+Written in Python 2.7.
 
+Version 1.0 - 7/10/15
+
+- Allows 1-10 players to play Dice Farmer on the same computer.
+- Rules and basic features implemented.
+- 
 ------------
 
 Version 1.0.
