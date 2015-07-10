@@ -1,13 +1,3 @@
-# To do next: Create each part of the turn in a helper function.
-
-# Allow the player to pair off their remaining dice.
-# Add these dice to their dice pool.
-
-# Then make runTurn work.
-# Then create a victory condition.
-
-# Then test the game to see if it works.
-
 def printRules(): # Rules of the game. Also introduces the source code.
 
     print '''Welcome to Dice Farmer Simulator.
